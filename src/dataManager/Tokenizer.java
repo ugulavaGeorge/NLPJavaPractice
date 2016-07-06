@@ -42,7 +42,29 @@ public class Tokenizer {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+        removeFirstClitics(tokens);
         return tokens;
     }
 
+    //TODO think how to improve this piece of shit.
+    private void removeFirstClitics(ArrayList<String> tokens){
+        for(int i=0; i<tokens.size(); i++){
+            if (tokens.get(i).equals("'ll")){
+                tokens.remove(i);
+                tokens.add(i,"will");
+            }
+            else if(tokens.get(i).equals("'m")){
+                tokens.remove(i);
+                tokens.add(i, "am");
+            }
+            else if(tokens.get(i).equals("'re")){
+                tokens.remove(i);
+                tokens.add(i, "are");
+            }
+            else if (tokens.get(i).equals("'ve")){
+                tokens.remove(i);
+                tokens.add(i,"have");
+            }
+        }
+    }
 }
