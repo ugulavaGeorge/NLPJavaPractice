@@ -10,7 +10,7 @@ import java.util.concurrent.*;
 /**
  * Created by George on 12.06.2016.
  */
-public class SpellChecker implements Callable<String>, Serializable {
+public class SpellChecker implements Callable<ArrayList<String>>, Serializable {
 
     private TreeSet<String> dictionary;
     private final int numberOfCores = Runtime.getRuntime().availableProcessors();
@@ -40,7 +40,7 @@ public class SpellChecker implements Callable<String>, Serializable {
         }
 
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://10.241.1.198:3306/wordnet", "george", "11235g");
+            connection = DriverManager.getConnection("jdbc:mysql://10.241.1.4:3306/wordnet", "george", "11235g");
             if (connection != null)
                 statement = connection.createStatement();
             if (statement != null)
@@ -87,14 +87,15 @@ public class SpellChecker implements Callable<String>, Serializable {
     private String wrapText(ArrayList<String> text){
         StringBuilder stringBuilder = new StringBuilder();
         for(String word : text){
-            stringBuilder.append(word + ' ');
+            stringBuilder.append(word);
+            stringBuilder.append(' ');
         }
         return stringBuilder.toString();
     }
 
     @Override
-    public String call() {
-        String result = null;
+    public ArrayList<String> call() {
+        ArrayList<String> result = new ArrayList<>();
         try {
             ExecutorService executor = Executors.newFixedThreadPool(numberOfCores);
             mistakes = executor.submit(new ErrorDetector(sourceText, dictionary, numberOfCores));
@@ -112,7 +113,8 @@ public class SpellChecker implements Callable<String>, Serializable {
             executor.shutdown();
             executor.awaitTermination(500, TimeUnit.MILLISECONDS);
             closeConnection();
-            result = wrapText(correctedText.get());
+            //result = wrapText(correctedText.get());
+            result = correctedText.get();
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
         }

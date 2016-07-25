@@ -1,9 +1,8 @@
 package dataManager.spellCorrector;
 
+import dataManager.support.DamerauLevenshteinAlgorithm;
 import dataManager.support.Pair;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
@@ -39,10 +38,10 @@ public class SuggestionsGenerator implements Callable<HashMap<String, ArrayList<
             suggestions.add(future);
         }
         executor.shutdown();
-        //TODO bullshit detected
-        //for (Future<Pair<String, ArrayList<String>>> suggestion : suggestions) {
-        //    System.out.println(suggestion.get().getCollateralValue().size());
-        //}
+        //TODO debug output : remove later.
+        for (Future<Pair<String, ArrayList<String>>> suggestion : suggestions) {
+            System.out.println(suggestion.get().getMainValue() + ' ' + suggestion.get().getCollateralValue().size());
+        }
 
         for (Future<Pair<String, ArrayList<String>>> suggestion : suggestions) {
             suggestionsForCorrection.put(suggestion.get().getMainValue(), suggestion.get().getCollateralValue());
@@ -62,6 +61,7 @@ public class SuggestionsGenerator implements Callable<HashMap<String, ArrayList<
         return result;
     }
 
+    //TODO there is a possibility to increase concurrency e.g determine edit Distance in different threads.
     class Task implements Callable<Pair<String, ArrayList<String>>> {
 
         private Pair<String, ArrayList<String>> mistake;
@@ -74,45 +74,20 @@ public class SuggestionsGenerator implements Callable<HashMap<String, ArrayList<
         public Pair<String, ArrayList<String>> call() throws Exception {
             ArrayList<String> twoGrams = getTwoGramsInString(mistake.getMainValue());
             HashMap<String, Integer> correctionsDraft = new HashMap<>();
-            for (String gram : twoGrams) {
-                for (String word : dictionary) {
-                    if (word.contains(gram)) {
-                        if (correctionsDraft.containsKey(word)) {
-                            Integer value = correctionsDraft.get(word);
-                            correctionsDraft.replace(word, ++value);
-                        } else
-                            correctionsDraft.put(word, 1);
-                    }
-                }
+            DamerauLevenshteinAlgorithm distanceEstimator = new DamerauLevenshteinAlgorithm(1,1,1,1);
+            for (String word : dictionary){
+                int editDistance = distanceEstimator.execute(mistake.getMainValue(),word);
+                correctionsDraft.put(word,editDistance);
             }
-
             Set<Entry<String, Integer>> entries = correctionsDraft.entrySet();
-            //TODO Think how to improve that.
-            //ArrayList<Pair<String, Integer>> topCandidates = new ArrayList<>();
-            //entries.forEach(e -> {
-            //    int maxValueInList = -1;
-            //    if (e.getValue() >= maxValueInList) {
-            //        maxValueInList = e.getValue();
-            //        topCandidates.add(new Pair<>(e.getKey(), e.getValue()));
-            //        if (topCandidates.size() > 300) {
-            //            for (Pair<String, Integer> candidate : topCandidates) {
-            //                if (candidate.getCollateralValue() < maxValueInList)
-            //                    topCandidates.remove(candidate);
-            //            }
-            //        }
-            //    }
-            //});
-            //for (Pair<String, Integer> candidate : topCandidates) {
-            //    mistake.getCollateralValue().add(candidate.getMainValue());
-            //}
-            int maxCount = 0;
+            int minDistance = 100000;
             for (Entry<String, Integer> entry : entries){
-                if(entry.getValue() > maxCount)
-                    maxCount = entry.getValue();
+                if (entry.getValue() < minDistance)
+                    minDistance = entry.getValue();
             }
-            int maxCount2 = maxCount;
-            entries.removeIf(e -> e.getValue() < maxCount2);
-            for (Entry<String, Integer> entry: entries){
+            int minimumDistance = minDistance;
+            entries.removeIf(e -> e.getValue()>minimumDistance);
+            for (Entry<String, Integer> entry : entries){
                 mistake.getCollateralValue().add(entry.getKey());
             }
             return mistake;

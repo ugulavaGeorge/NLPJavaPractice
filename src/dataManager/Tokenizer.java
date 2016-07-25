@@ -46,6 +46,7 @@ public class Tokenizer {
         return tokens;
     }
 
+    //first level contraction removing
     //TODO think how to improve this piece of shit.
     private void removeFirstClitics(ArrayList<String> tokens){
         for(int i=0; i<tokens.size(); i++){

@@ -23,7 +23,7 @@ public class AcronymsRemover implements Callable<ArrayList<String>>{
 
     private void establishConnection(){
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://10.241.1.198:3306/wordnet", "george", "11235g");
+            connection = DriverManager.getConnection("jdbc:mysql://10.241.1.4:3306/wordnet", "george", "11235g");
             if (connection != null){
                 statement = connection.createStatement();
             }
@@ -54,7 +54,11 @@ public class AcronymsRemover implements Callable<ArrayList<String>>{
         obtainAcronymsList();
         for (int i=0; i < tokenizedText.size(); i++){
             if(acronyms.containsKey(tokenizedText.get(i))){
-                tokenizedText.set(i, acronyms.get(tokenizedText.get(i)));
+                String [] split = acronyms.get(tokenizedText.get(i)).split("\\W+");
+                tokenizedText.set(i, split[0]);
+                for (int k = 1; k <split.length; k++){
+                    tokenizedText.add(i+k,split[k]);
+                }
             }
         }
         return tokenizedText;

@@ -59,7 +59,6 @@ public class ErrorsCorrector implements Callable<ArrayList<String>> {
             }
             correctedText.set(mistake,mistakeReplacement);
         }
-        correctedText.forEach(e -> System.out.print(e + ' '));
         return correctedText;
     }
 
@@ -103,7 +102,7 @@ public class ErrorsCorrector implements Callable<ArrayList<String>> {
             this.suggestion = suggestionWithQuery.getMainValue();
             this.query = suggestionWithQuery.getCollateralValue();
             try {
-                connection = DriverManager.getConnection("jdbc:mysql://10.241.1.198:3306/wordnet", "george", "11235g");
+                connection = DriverManager.getConnection("jdbc:mysql://10.241.1.4:3306/wordnet", "george", "11235g");
                 if (connection != null)
                     this.statement = connection.createStatement();
             } catch (SQLException e) {
